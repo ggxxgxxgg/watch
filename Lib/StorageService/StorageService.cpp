@@ -1,4 +1,4 @@
-#include "StorageService.h"
+ï»¿#include "StorageService.h"
 #include "lvgl/lvgl.h"
 #include <algorithm>
 
@@ -23,16 +23,16 @@ do{\
 }while(0)
 
 /// <summary>
-/// ÎÄ¼ş²Ù×÷µÄ·â×°Àà
+/// æ–‡ä»¶æ“ä½œçš„å°è£…ç±»
 /// </summary>
 class FileWrapper
 {
 public:
     /// <summary>
-    /// ¹¹Ôìº¯Êı
+    /// æ„é€ å‡½æ•°
     /// </summary>
-    /// <param name="path">´«ÈëµØÖ·²ÎÊı</param>
-    /// <param name="mode">ÎÄ¼ş´ò¿ªÄ£Ê½</param>
+    /// <param name="path">ä¼ å…¥åœ°å€å‚æ•°</param>
+    /// <param name="mode">æ–‡ä»¶æ‰“å¼€æ¨¡å¼</param>
     FileWrapper(const char* path, lv_fs_mode_t mode)
     {
         memset(&file, 0, sizeof(file));
@@ -44,9 +44,9 @@ public:
         lv_fs_close(&file);
     }
     /// <summary>
-    /// ¶ÁÈ¡Ò»¸ö×Ö½Ú
+    /// è¯»å–ä¸€ä¸ªå­—èŠ‚
     /// </summary>
-    /// <returns>¶ÁÈ¡µ½µÄÊı¾İ</returns>
+    /// <returns>è¯»å–åˆ°çš„æ•°æ®</returns>
     uint8_t read()
     {
         uint8_t data = 0;
@@ -54,11 +54,11 @@ public:
         return data;
     }
     /// <summary>
-    /// ¶ÁÈ¡Ö¸¶¨µÄByte
+    /// è¯»å–æŒ‡å®šçš„Byte
     /// </summary>
-    /// <param name="buffer">´æ´¢buffer</param>
-    /// <param name="length">¶ÁÈ¡µÄ×Ö½ÚÊı</param>
-    /// <returns>¶ÁÈ¡µ½µÄ×Ö½ÚÊı</returns>
+    /// <param name="buffer">å­˜å‚¨buffer</param>
+    /// <param name="length">è¯»å–çš„å­—èŠ‚æ•°</param>
+    /// <returns>è¯»å–åˆ°çš„å­—èŠ‚æ•°</returns>
     size_t readBytes(void* buffer, size_t length)
     {
         uint32_t br = 0;
@@ -66,20 +66,20 @@ public:
         return br;
     }
     /// <summary>
-    /// Ğ´Ò»¸ö×Ö½ÚµÄÊı¾İ
+    /// å†™ä¸€ä¸ªå­—èŠ‚çš„æ•°æ®
     /// </summary>
-    /// <param name="c">ÒªĞ´µÄÊı¾İ</param>
+    /// <param name="c">è¦å†™çš„æ•°æ®</param>
     /// <returns></returns>
     size_t write(uint8_t c)
     {
         return write(&c, 1);
     }
     /// <summary>
-    /// Ğ´Ö¸¶¨³¤¶ÈµÄÊı¾İ
+    /// å†™æŒ‡å®šé•¿åº¦çš„æ•°æ®
     /// </summary>
-    /// <param name="s">Êı¾İµØÖ·</param>
-    /// <param name="n">³¤¶È</param>
-    /// <returns>³É¹¦Ğ´ÈëµÄ×Ö½ÚÊı</returns>
+    /// <param name="s">æ•°æ®åœ°å€</param>
+    /// <param name="n">é•¿åº¦</param>
+    /// <returns>æˆåŠŸå†™å…¥çš„å­—èŠ‚æ•°</returns>
     size_t write(const uint8_t* s, size_t n)
     {
         uint32_t bw = 0;
@@ -91,12 +91,12 @@ public:
         return fs_res == LV_FS_RES_OK;
     };
 private:
-    lv_fs_res_t fs_res;//ÎÄ¼ş²Ù×÷½á¹û
-    lv_fs_file_t file;//ÎÄ¼ş
+    lv_fs_res_t fs_res;//æ–‡ä»¶æ“ä½œç»“æœ
+    lv_fs_file_t file;//æ–‡ä»¶
 };
 
 /// <summary>
-/// ´æ´¢·şÎñµÄ¹¹Ôìº¯Êı
+/// å­˜å‚¨æœåŠ¡çš„æ„é€ å‡½æ•°
 /// </summary>
 /// <param name="filePath"></param>
 /// <param name="bufferSize"></param>
@@ -112,24 +112,24 @@ StorageService::~StorageService()
 }
 
 /// <summary>
-/// Ôö¼ÓÊı¾İ
+/// å¢åŠ æ•°æ®
 /// </summary>
-/// <param name="key">Êı¾İ½ÚµãÃû×Ö</param>
-/// <param name="value">Êı¾İÖ¸Õë</param>
-/// <param name="size">Êı¾İ´óĞ¡</param>
-/// <param name="type">Êı¾İÀàĞÍ</param>
+/// <param name="key">æ•°æ®èŠ‚ç‚¹åå­—</param>
+/// <param name="value">æ•°æ®æŒ‡é’ˆ</param>
+/// <param name="size">æ•°æ®å¤§å°</param>
+/// <param name="type">æ•°æ®ç±»å‹</param>
 /// <returns></returns>
 bool StorageService::Add(const char* key, void* value, uint16_t size, DataType_t type)
 {
     Node_t* findNode = SearchNode(key);
 
-    //²»Îª¿Õ ±íÊ¾ÒÑ¾­ÓĞ½ÚµãÁË
+    //ä¸ä¸ºç©º è¡¨ç¤ºå·²ç»æœ‰èŠ‚ç‚¹äº†
     if (findNode != nullptr)
     {
         return false;
     }
 
-    Node_t* node = new Node_t;//¹¹ÔìÊı¾İ½Úµã
+    Node_t* node = new Node_t;//æ„é€ æ•°æ®èŠ‚ç‚¹
     node->key = key;
     node->value = value;
     node->size = size;
@@ -141,19 +141,19 @@ bool StorageService::Add(const char* key, void* value, uint16_t size, DataType_t
 }
 
 /// <summary>
-/// ÒÀ¾İÃû×ÖÉ¾³ıÊı¾İ³ØÖĞµÄ½Úµã
+/// ä¾æ®åå­—åˆ é™¤æ•°æ®æ± ä¸­çš„èŠ‚ç‚¹
 /// </summary>
-/// <param name="key">Ãû×Ö</param>
+/// <param name="key">åå­—</param>
 /// <returns></returns>
 bool StorageService::Remove(const char* key)
 {
-    Node_t* node = SearchNode(key);//²éÕÒÊı¾İ½Úµã
+    Node_t* node = SearchNode(key);//æŸ¥æ‰¾æ•°æ®èŠ‚ç‚¹
 
     if (node == nullptr)
     {
         return false;
     }
-    //µü´úÆ÷±éÀú
+    //è¿­ä»£å™¨éå†
     auto iter = std::find(NodePool.begin(), NodePool.end(), node);
 
     if (iter == NodePool.end())
@@ -161,23 +161,23 @@ bool StorageService::Remove(const char* key)
         return false;
     }
 
-    NodePool.erase(iter);//²Á³ıÊı¾İ½Úµã
-    delete node;//ÊÍ·ÅÄÚ´æ
+    NodePool.erase(iter);//æ“¦é™¤æ•°æ®èŠ‚ç‚¹
+    delete node;//é‡Šæ”¾å†…å­˜
 
     return true;
 }
 
 /// <summary>
-/// ¼ÓÔØÎÄ¼ş
+/// åŠ è½½æ–‡ä»¶
 /// </summary>
-/// <param name="mode">¼ÓÔØÎÄ¼şµÄÄ£Ê½</param>
+/// <param name="mode">åŠ è½½æ–‡ä»¶çš„æ¨¡å¼</param>
 /// <returns></returns>
 bool StorageService::LoadFile(lv_fs_mode_t mode)
 {
     FileWrapper file(FilePath, mode);
     bool retval = true;
 
-    if (!file)///´ò¿ªÎÄ¼şÊ§°Ü
+    if (!file)///æ‰“å¼€æ–‡ä»¶å¤±è´¥
     {
         LV_LOG_ERROR("Failed to open file: %s", FilePath);
         return false;
@@ -306,10 +306,10 @@ bool StorageService::SaveFile(const char* backupPath)
 }
 
 /// <summary>
-/// ÔÚ½Úµã³ØÖĞ²éÑ¯½Úµã
+/// åœ¨èŠ‚ç‚¹æ± ä¸­æŸ¥è¯¢èŠ‚ç‚¹
 /// </summary>
-/// <param name="key">²éÑ¯µÄ½ÚµãÃû×Ö</param>
-/// <returns>²éÑ¯³É¹¦·µ»Ø½ÚµãÖ¸Õë Ê§°Ü·µ»Ø¿ÕÖ¸Õë</returns>
+/// <param name="key">æŸ¥è¯¢çš„èŠ‚ç‚¹åå­—</param>
+/// <returns>æŸ¥è¯¢æˆåŠŸè¿”å›èŠ‚ç‚¹æŒ‡é’ˆ å¤±è´¥è¿”å›ç©ºæŒ‡é’ˆ</returns>
 StorageService::Node_t* StorageService::SearchNode(const char* key)
 {
     for (auto iter : NodePool)
