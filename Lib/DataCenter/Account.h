@@ -34,19 +34,17 @@ class Account
 {
 public:
 
-    /* Event type enumeration */
     // 事件类型
     typedef enum
     {
         EVENT_NONE,
-        EVENT_PUB_PUBLISH, // Publisher posted information
-        EVENT_SUB_PULL,    // Subscriber data pull request
-        EVENT_NOTIFY,      // Subscribers send notifications to publishers
-        EVENT_TIMER,       // Timed event
+        EVENT_PUB_PUBLISH, // 发布者发布信息
+        EVENT_SUB_PULL,    // 用户数据提取请求
+        EVENT_NOTIFY,      // 订阅者向发布者发送通知
+        EVENT_TIMER,       // 定时事件
         _EVENT_LAST
     } EventCode_t;
 
-    /* Error type enumeration */
     //错误类型
     typedef enum
     {
@@ -61,21 +59,20 @@ public:
         RES_PARAM_ERROR         = -8
     } ResCode_t;
 
-    /* Event parameter structure */
     //事件参数结构体
     typedef struct
     {
-        EventCode_t event; // Event type
-        Account* tran;     // Pointer to sender
-        Account* recv;     // Pointer to receiver
-        void* data_p;      // Pointer to data
-        uint32_t size;     // The length of the data
+        EventCode_t event; // 事件类型
+        Account* tran;     // 发送方指针
+        Account* recv;     // 接受方指针
+        void* data_p;      // 数据指针
+        uint32_t size;     // 数据的长度
     } EventParam_t;
 
-    /* Event callback function pointer */
     //回调函数
     typedef int(*EventCallback_t)(Account* account, EventParam_t* param);
 
+    //用户容器
     typedef std::vector<Account*> AccountVector_t;
 
 public:
@@ -102,23 +99,23 @@ public:
     size_t GetSubscribersSize();
 
 public:
-    const char* ID;      /* Unique account ID */
-    DataCenter* Center;  /* Pointer to the data center */
-    void* UserData;
+    const char* ID;         //唯一帐户ID
+    DataCenter* Center;     //指向数据中心的指针
+    void* UserData;         //
 
-    AccountVector_t publishers;  /* Followed publishers */
-    AccountVector_t subscribers; /* Followed subscribers */
+    AccountVector_t publishers;  //订阅的发布者
+    AccountVector_t subscribers; //订阅者
 
     //账户的结构体
     struct
     {
-        EventCallback_t eventCallback;
-        lv_timer_t* timer;
-        PingPongBuffer_t BufferManager;
-        uint32_t BufferSize;//单个buffer的尺寸
+        EventCallback_t eventCallback;  //回调函数
+        lv_timer_t* timer;              //定时器
+        PingPongBuffer_t BufferManager; //Buffer管理 格式为uint8_t
+        uint32_t BufferSize;            //单个buffer的大小
     } priv;
-
 private:
+    //回调函数
     static void TimerCallbackHandler(lv_timer_t* task);
 };
 

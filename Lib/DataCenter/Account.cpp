@@ -5,11 +5,11 @@
 #define ACCOUNT_DISCARD_READ_DATA   1
 
 /**
-  * @brief  Account constructor
-  * @param  id:       Unique name
-  * @param  center:   Pointer to the data center
-  * @param  bufSize:  The length of the data to be cached
-  * @param  userData: Point to the address of user-defined data
+  * @brief  账户的构造函数
+  * @param  id:       唯一的名字
+  * @param  center:   指向数据中心的指针
+  * @param  bufSize:  要缓存的数据的长度
+  * @param  userData: 指向用户定义数据的地址
   * @retval None
   */
 Account::Account(
@@ -19,6 +19,7 @@ Account::Account(
     void* userData
 )
 {
+    //初始化priv
     memset(&priv, 0, sizeof(priv));
 
     ID = id;
@@ -50,7 +51,7 @@ Account::Account(
 }
 
 /**
-  * @brief  Account destructor
+  * @brief  账户析构函数
   * @param  None
   * @retval None
   */
@@ -58,53 +59,54 @@ Account::~Account()
 {
     DC_LOG_INFO("Account[%s] deleting...", ID);
 
-    /* Release cache */
-    if(priv.BufferSize)
+    //释放cache
+    if(priv.BufferSize != 0)
     {
-        lv_mem_free(priv.BufferManager.buffer[0]);
+        lv_mem_free(priv.BufferManager.buffer);
     }
 
-    /* Delete timer */
-    if (priv.timer)
+    //删除timer
+    if (priv.timer != nullptr)
     {
         lv_timer_del(priv.timer);
         DC_LOG_INFO("Account[%s] task deleted", ID);
     }
 
-    /* Let subscribers unfollow */
+    //让订阅者取消关注
     for(auto iter : subscribers)
     {
         iter->Unsubscribe(ID);
         DC_LOG_INFO("sub[%s] unsubscribed pub[%s]", iter->ID, ID);
     }
 
-    /* Ask the publisher to delete this subscriber */
+    //要求发布者删除此订阅者
     for (auto iter : publishers)
     {
         Center->Remove(&iter->subscribers, this);
         DC_LOG_INFO("pub[%s] removed sub[%s]", iter->ID, ID);
     }
 
-    /* Let the data center delete the account */
+    //让数据中心删除该帐户
     Center->RemoveAccount(this);
+
     DC_LOG_INFO("Account[%s] deleted", ID);
 }
 
 /**
-  * @brief  Subscribe to Publisher
-  * @param  pubID: Publisher ID
-  * @retval Pointer to publisher
+  * @brief  订阅发布者
+  * @param  pubID: 发布者ID
+  * @retval 指向发布者的指针
   */
 Account* Account::Subscribe(const char* pubID)
 {
-    /* Not allowed to subscribe to yourself */
+    //不允许订阅你自己
     if (strcmp(pubID, ID) == 0)
     {
         DC_LOG_ERROR("Account[%s] try to subscribe to it itself", ID);
         return nullptr;
     }
 
-    /* Whether to subscribe repeatedly */
+    //是否重复订阅
     Account* pub = Center->Find(&publishers, pubID);
     if(pub != nullptr)
     {
@@ -112,7 +114,7 @@ Account* Account::Subscribe(const char* pubID)
         return nullptr;
     }
 
-    /* Whether the account is created */
+    //是否有这个发布者
     pub = Center->SearchAccount(pubID);
     if (pub == nullptr)
     {
@@ -120,10 +122,10 @@ Account* Account::Subscribe(const char* pubID)
         return nullptr;
     }
 
-    /* Add the publisher to the subscription list */
+    //将发布者添加到订阅列表中
     publishers.push_back(pub);
 
-    /* Let the publisher add this subscriber */
+    //让发布者添加此订阅者
     pub->subscribers.push_back(this);
 
     DC_LOG_INFO("sub[%s] subscribed pub[%s]", ID, pubID);
@@ -132,13 +134,13 @@ Account* Account::Subscribe(const char* pubID)
 }
 
 /**
-  * @brief  Unsubscribe from publisher
-  * @param  pubID: Publisher ID
-  * @retval Return true if unsubscribe is successful
+  * @brief  取消订阅
+  * @param  pubID: 发布者ID
+  * @retval 如果退订成功返回true
   */
 bool Account::Unsubscribe(const char* pubID)
 {
-    /* Whether to subscribe to the publisher */
+    //是否订阅发布者
     Account* pub = Center->Find(&publishers, pubID);
     if (pub == nullptr)
     {
@@ -146,17 +148,17 @@ bool Account::Unsubscribe(const char* pubID)
         return false;
     }
 
-    /* Remove the publisher from the subscription list */
+    //从订阅列表中删除发布者
     Center->Remove(&publishers, pub);
 
-    /* Let the publisher add this subscriber */
+    //发布者删除此订阅者
     Center->Remove(&pub->subscribers, this);
 
     return true;
 }
 
 /**
-  * @brief  Submit data to cache
+  * @brief  向缓存提交数据
   * @param  data_p: Pointer to data
   * @param  size:   The size of the data
   * @retval Return true if the submission is successful
@@ -165,7 +167,7 @@ bool Account::Commit(const void* data_p, uint32_t size)
 {
     if (!size || size != priv.BufferSize)
     {
-        DC_LOG_ERROR("pub[%s] has not cache", ID);
+        DC_LOG_ERROR("pub[%s] has no cache", ID);
         return false;
     }
 
@@ -183,7 +185,7 @@ bool Account::Commit(const void* data_p, uint32_t size)
 }
 
 /**
-  * @brief  Publish data to subscribers
+  * @brief  向订阅者发布数据
   * @param  None
   * @retval error code
   */
@@ -191,6 +193,7 @@ int Account::Publish()
 {
     int retval = RES_UNKNOW;
 
+    //数据缓存大小为0
     if (priv.BufferSize == 0)
     {
         DC_LOG_ERROR("pub[%s] has not cache", ID);
@@ -198,6 +201,7 @@ int Account::Publish()
     }
 
     void* rBuf;
+    //发送方没有提交数据
     if (!PingPongBuffer_GetReadBuf(&priv.BufferManager, &rBuf))
     {
         DC_LOG_WARN("pub[%s] data was not commit", ID);
@@ -211,8 +215,7 @@ int Account::Publish()
     param.data_p = rBuf;
     param.size = priv.BufferSize;
 
-    /* Publish messages to subscribers */
-    //遍历每一个订阅
+    //遍历每一个订阅者
     for(auto iter : subscribers)
     {
         Account* sub = iter;
@@ -221,6 +224,7 @@ int Account::Publish()
         DC_LOG_INFO("pub[%s] publish >> data(0x%p)[%d] >> sub[%s]...",
                     ID, param.data_p, param.size, sub->ID);
 
+        //设置了回调函数
         if (callback != nullptr)
         {
             param.recv = sub;
@@ -240,7 +244,7 @@ int Account::Publish()
 }
 
 /**
-  * @brief  Pull data from the publisher
+  * @brief  从发布者处提取数据
   * @param  pubID:  Publisher ID
   * @param  data_p: Pointer to data
   * @param  size:   The size of the data
@@ -249,6 +253,7 @@ int Account::Publish()
 int Account::Pull(const char* pubID, void* data_p, uint32_t size)
 {
     Account* pub = Center->Find(&publishers, pubID);
+    //没有订阅这个发布者
     if (pub == nullptr)
     {
         DC_LOG_ERROR("sub[%s] was not subscribe pub[%s]", ID, pubID);
